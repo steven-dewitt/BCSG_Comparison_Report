@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BCSG Test Comparison</title>
+<!--
+  Blast-Cooled Starter Generator test comparison - runs entirely in the browser.
+  No installation, no internet connection and no external libraries are needed:
+  open this file in Chrome, Edge, Firefox or Safari and load the comparison workbook
+  (.xlsm / .xlsx, the DataString sheet is used) or a CSV with the same columns.
+  Data never leaves the computer.
+-->
+<style id="report-css">
+.report { --ink:#1f2937; --muted:#6b7280; --line:#d1d5db; --head:#1F4E78; color: var(--ink); }
+.report h1 { font-size: 22px; margin: 0 0 4px; color: #1F3864; }
+.report h2 { font-size: 17px; margin: 36px 0 8px; color: #1F3864; border-bottom: 2px solid #1F3864; padding-bottom: 4px; }
+.report h3 { font-size: 14px; margin: 18px 0 6px; }
+.report .meta { color: var(--muted); margin: 2px 0; }
+.report .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+.report table { border-collapse: collapse; margin: 6px 0 4px; font-variant-numeric: tabular-nums; font-size: 13px; }
+.report th, .report td { border: 1px solid var(--line); padding: 3px 8px; white-space: nowrap; }
+.report th { background: var(--head); color: #fff; font-weight: 600; text-align: center; }
+.report td.num { text-align: right; }
+.report td.label { font-weight: 600; }
+.report td.notes { white-space: normal; min-width: 140px; }
+.report tr.baseline td.label { background: #DDEBF7; }
+.report tr.stat td { background: #f3f4f6; font-style: italic; }
+.report .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 4px 0 0; font-size: 12px; }
+.report .legend span::before { content: ""; display: inline-block; width: 11px; height: 11px; margin-right: 5px;
+  vertical-align: -1px; background: var(--c); border-radius: 2px; }
+.report svg text { font-family: inherit; }
+.report .note { color: var(--muted); font-size: 12px; }
+@media print { .report h2 { break-before: page; } .report h2.first { break-before: auto; } .report .scroll { overflow: visible; } }
+</style>
+<style>
+:root { --ink:#1f2937; --muted:#6b7280; --line:#d1d5db; --soft:#f3f4f6; --accent:#1F4E78; --accent-ink:#ffffff;
+        --sel:#E2EFDA; --bg:#ffffff; --panel:#f8fafc; --err:#b91c1c; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+.appbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.appbar h1 { font-size: 17px; margin: 0; color: #1F3864; }
+.appbar .status { margin: 0; color: var(--muted); font-size: 12px; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: #fff; border-radius: 6px;
+  padding: 5px 11px; cursor: pointer; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: #9ca3af; background: var(--soft); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { background: #173b5c; }
+.btn.small { padding: 2px 8px; font-size: 12px; }
+.layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: calc(100vh - 60px); }
+aside { border-right: 1px solid var(--line); background: var(--panel); padding: 12px 14px 40px; overflow: auto; }
+aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 6px; }
+aside h2:first-child { margin-top: 0; }
+main { padding: 18px 22px 60px; min-width: 0; }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.field { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.list { border: 1px solid var(--line); border-radius: 6px; background: #fff; max-height: 42vh; overflow: auto; margin-top: 6px; }
+.item { display: grid; grid-template-columns: 18px 78px 70px 1fr 22px; gap: 6px; align-items: center; padding: 3px 8px;
+  border-bottom: 1px solid #eef0f3; cursor: pointer; font-size: 13px; user-select: none; }
+.item:last-child { border-bottom: 0; }
+.item:hover { background: var(--soft); }
+.item.on { background: var(--sel); }
+.item .id { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .gr, .item .nt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .nt { color: var(--muted); }
+.item .sg { color: var(--muted); text-align: right; font-size: 11px; }
+.hint { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; min-height: 28px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 999px; font-size: 12px;
+  background: #fff; border: 1px solid var(--line); cursor: grab; }
+.chip.base { background: #DDEBF7; border-color: #9DC3E6; }
+.chip b { color: var(--muted); font-weight: 500; }
+.chip button { border: 0; background: none; cursor: pointer; padding: 0 4px; color: var(--muted); font-size: 14px; line-height: 1; }
+.chip button:hover { color: var(--err); }
+.chip.dragging { opacity: .4; }
+.opts { display: grid; grid-template-columns: 110px 1fr; gap: 6px 8px; align-items: center; }
+.opts label { color: var(--muted); font-size: 13px; }
+.segs { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.segs label { color: var(--ink); white-space: nowrap; }
+.segs .empty { color: #9ca3af; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-top: 10px; }
+.dropzone { margin: 40px auto; max-width: 640px; border: 2px dashed #9ca3af; border-radius: 12px; padding: 36px 28px;
+  text-align: center; color: var(--muted); background: var(--panel); }
+.dropzone h2 { color: var(--ink); font-size: 18px; margin: 0 0 8px; }
+.dropzone ol { text-align: left; display: inline-block; margin: 12px 0 0; }
+body.dragover .dropzone, body.dragover main { outline: 3px dashed var(--accent); outline-offset: -8px; }
+.error { color: var(--err); font-size: 13px; margin: 6px 0 0; }
+.empty-state { color: var(--muted); padding: 40px 0; text-align: center; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  aside { border-right: 0; border-bottom: 1px solid var(--line); }
+  main { padding: 16px; }
+}
+@media print {
+  .appbar, aside, .no-print { display: none !important; }
+  .layout { display: block; }
+  main { padding: 0; }
+}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <div>
+    <h1>Blast-Cooled Starter Generator Comparison</h1>
+    <p class="status" id="status">No data loaded</p>
+  </div>
+  <div class="actions">
+    <label class="btn primary" title="Open the comparison workbook (.xlsm/.xlsx) or a CSV">
+      Open data file…<input type="file" id="file" accept=".xlsx,.xlsm,.csv,.txt" hidden>
+    </label>
+    <button class="btn" id="exportXlsx" disabled title="Excel workbook with native charts and live formulas">⬇ Excel</button>
+    <button class="btn" id="exportHtml" disabled title="Stand-alone HTML copy of this report">⬇ HTML</button>
+    <button class="btn" id="exportCsv" disabled title="Selected values, one row per test / metric / segment">⬇ CSV</button>
+    <button class="btn" id="print" disabled title="Print, or save as PDF">Print / PDF</button>
+  </div>
+</header>
+
+<div class="layout" id="layout" hidden>
+  <aside>
+    <h2>Find tests</h2>
+    <input class="field" id="search" type="search" placeholder="Search ID, grade or notes · wildcards: 25-*  · several: 26-01 25-09"
+           autocomplete="off" spellcheck="false">
+    <div class="row" style="margin-top:6px">
+      <select class="field" id="gradeFilter" style="flex:1"></select>
+      <button class="btn small" id="addShown" title="Add every test in the list below (Enter in the search box)">Add shown</button>
+    </div>
+    <div class="list" id="list" role="listbox" aria-multiselectable="true"></div>
+    <p class="hint" id="listHint"></p>
+
+    <h2>Compared tests <span id="selCount"></span></h2>
+    <div class="chips" id="chips"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="btn small" id="clearSel">Clear</button>
+      <span class="hint" style="margin:0">Click a test above to add/remove · drag to reorder</span>
+    </div>
+
+    <h2>Options</h2>
+    <div class="opts">
+      <label for="baseline">Baseline</label>
+      <select class="field" id="baseline"></select>
+      <label for="order">Order</label>
+      <select class="field" id="order">
+        <option value="input">As picked</option>
+        <option value="test">By test number</option>
+        <option value="grade">By grade, then test</option>
+      </select>
+      <label for="groupBy">Chart bars</label>
+      <select class="field" id="groupBy">
+        <option value="auto">Auto</option>
+        <option value="segment">Grouped by segment</option>
+        <option value="test">Grouped by test</option>
+      </select>
+      <label>Segments</label>
+      <div class="segs" id="segs"></div>
+    </div>
+    <details>
+      <summary>More options</summary>
+      <div class="opts" style="margin-top:8px">
+        <label for="title">Title</label>
+        <input class="field" id="title">
+        <label for="units">Units</label>
+        <input class="field" id="units">
+        <label>Colours</label>
+        <label style="color:var(--ink)"><input type="checkbox" id="higherBetter"> Higher values are better (green)</label>
+        <label>Empty segments</label>
+        <label style="color:var(--ink)"><input type="checkbox" id="keepEmpty"> Keep segments with no data</label>
+      </div>
+      <p class="hint">Saved on this computer: <button class="btn small" id="forget">Forget saved data</button></p>
+    </details>
+  </aside>
+  <main><div class="report" id="report"></div></main>
+</div>
+
+<div class="dropzone" id="drop">
+  <h2>Load the test data to start</h2>
+  <div>Drop the comparison workbook here, or use <b>Open data file…</b></div>
+  <ol>
+    <li>Use the existing <i>Blast-Cooled Starter Generator Comparison</i> workbook (.xlsm or .xlsx) &mdash; its
+        <b>DataString</b> sheet is read &mdash; or a CSV with the same columns.</li>
+    <li>Pick any number of tests on the left.</li>
+    <li>Export to Excel, HTML, CSV or PDF.</li>
+  </ol>
+  <p class="hint">Everything runs in this browser; the file is not uploaded anywhere.</p>
+  <p class="error" id="loadError"></p>
+</div>
+
+<script>
+'use strict';
+
+/* ============================================================== utilities */
+const DEFAULT_TITLE = 'Blast-Cooled Starter Generator Comparison';
+const AUTO_GROUP_BY_TEST_ABOVE = 8;
+const STORE_KEY = 'bcsg-compare-v1';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+const normGrade = (g) => String(g ?? '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+const naturalKey = (s) => String(s).split(/(\d+)/).map((t) => (/^\d+$/.test(t) ? +t : t.toLowerCase()));
+function cmpKeys(a, b) {
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    const x = a[i], y = b[i];
+    if (x === y) continue;
+    if (typeof x === typeof y) return x < y ? -1 : 1;
+    return typeof x === 'number' ? -1 : 1;
+  }
+  return a.length - b.length;
+}
+const mean = (arr) => { const v = arr.filter(isNum); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+const minOf = (arr) => { const v = arr.filter(isNum); return v.length ? Math.min(...v) : null; };
+const maxOf = (arr) => { const v = arr.filter(isNum); return v.length ? Math.max(...v) : null; };
+const fmtNum = (v) => (isNum(v) ? Math.round(v).toLocaleString('en-US') : '');
+const fmtPct = (v) => (isNum(v) ? `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%` : '');
+const pad2 = (n) => String(n).padStart(2, '0');
+const fmtDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+const globRe = (p) => new RegExp('^' + p.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+const isGlob = (p) => /[*?[]/.test(p);
+function levenshtein(a, b) {
+  const d = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = d[0]; d[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = d[j];
+      d[j] = Math.min(d[j] + 1, d[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return d[b.length];
+}
+
+/* ================================================================ colours */
+const BASE_COLORS = ['#2F6DB5', '#E3832B', '#3A9A5B', '#C8423B', '#8064A8', '#8C5A45', '#D16BA5', '#6F7378',
+  '#B5A82A', '#2BA6B5', '#9FC0E8', '#F2B97F', '#93D1A3', '#EE9A93', '#C1AEDB', '#C9A291'];
+const BAD = '#F8696B', MID = '#FFEB84', GOOD = '#63BE7B', NEG = '#F8696B', ZERO = '#FFFFFF', POS = '#63BE7B';
+function hslHex(h, s, l) {
+  const f = (n) => { const k = (n + h * 12) % 12; const a = s * Math.min(l, 1 - l);
+    return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); };
+  return '#' + [f(0), f(8), f(4)].map((x) => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+function palette(n) {
+  const out = BASE_COLORS.slice(0, n);
+  let hue = 0.11;
+  while (out.length < n) { hue = (hue + 0.618033988749895) % 1; out.push(hslHex(hue, 0.6, 0.45 + 0.15 * (out.length % 2))); }
+  return out;
+}
+const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+function blend(c1, c2, t) {
+  t = Math.min(Math.max(t, 0), 1);
+  const a = rgb(c1), b = rgb(c2);
+  return '#' + a.map((x, i) => Math.round(x + (b[i] - x) * t).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+const threeColor = (t, lo, mid, hi) => (t < 0.5 ? blend(lo, mid, t * 2) : blend(mid, hi, (t - 0.5) * 2));
+
+/* ============================================================ zip reading */
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined')
+    throw new Error('This browser cannot read Excel files. Use a current Chrome, Edge, Firefox or Safari, or load a CSV.');
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+function unzip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('This is not an .xlsx/.xlsm workbook (older .xls files: re-save as .xlsx in Excel).');
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const entries = new Map(), dec = new TextDecoder();
+  for (let n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('The workbook file is damaged (bad zip directory).');
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const off = dv.getUint32(p + 42, true);
+    entries.set(dec.decode(u8.subarray(p + 46, p + 46 + nlen)), { method, csize, off });
+    p += 46 + nlen + xlen + clen;
+  }
+  return {
+    async text(name) {
+      const e = entries.get(name);
+      if (!e) return null;
+      const start = e.off + 30 + dv.getUint16(e.off + 26, true) + dv.getUint16(e.off + 28, true);
+      const raw = u8.subarray(start, start + e.csize);
+      if (e.method === 0) return dec.decode(raw);
+      if (e.method === 8) return dec.decode(await inflateRaw(raw));
+      throw new Error(`Unsupported compression in ${name}.`);
+    },
+  };
+}
+function resolvePath(base, target) {
+  if (target.startsWith('/')) return target.slice(1);
+  const parts = base.split('/').slice(0, -1);
+  for (const seg of target.split('/')) {
+    if (seg === '..') parts.pop(); else if (seg !== '.' && seg !== '') parts.push(seg);
+  }
+  return parts.join('/');
+}
+
+/* =========================================================== xlsx reading */
+const byTag = (node, tag) => Array.from(node.getElementsByTagNameNS('*', tag));
+const kids = (node, tag) => Array.from(node.children).filter((e) => e.localName === tag);
+const attrLocal = (el, local) => { for (const a of el.attributes) if (a.localName === local && a.prefix) return a.value; return null; };
+function colIndex(ref) {
+  let n = 0;
+  for (const ch of ref) { const c = ch.charCodeAt(0); if (c < 65 || c > 90) break; n = n * 26 + (c - 64); }
+  return n - 1;
+}
+async function readXlsx(buf) {
+  const zip = unzip(buf);
+  const parse = async (name) => {
+    const t = await zip.text(name);
+    return t == null ? null : new DOMParser().parseFromString(t, 'application/xml');
+  };
+  let wbPath = 'xl/workbook.xml';
+  const rootRels = await parse('_rels/.rels');
+  if (rootRels) {
+    const r = byTag(rootRels, 'Relationship').find((x) => /\/officeDocument$/.test(x.getAttribute('Type')));
+    if (r) wbPath = resolvePath('', r.getAttribute('Target'));
+  }
+  const wb = await parse(wbPath);
+  if (!wb) throw new Error('No workbook found inside the file.');
+  const rels = await parse(wbPath.replace(/([^/]+)$/, '_rels/$1.rels'));
+  const relTarget = {}, relType = {};
+  for (const r of rels ? byTag(rels, 'Relationship') : []) {
+    relTarget[r.getAttribute('Id')] = resolvePath(wbPath, r.getAttribute('Target'));
+    relType[r.getAttribute('Id')] = r.getAttribute('Type');
+  }
+  let strings = [];
+  const sstId = Object.keys(relType).find((k) => /\/sharedStrings$/.test(relType[k]));
+  if (sstId) {
+    const sst = await parse(relTarget[sstId]);
+    strings = byTag(sst, 'si').map((si) => byTag(si, 't').filter((t) => t.parentNode.localName !== 'rPh')
+      .map((t) => t.textContent).join(''));
+  }
+  const sheets = byTag(wb, 'sheet').map((s) => ({ name: s.getAttribute('name'), path: relTarget[attrLocal(s, 'id')] }));
+  return {
+    sheetNames: sheets.map((s) => s.name),
+    async rows(name) {
+      const sheet = sheets.find((s) => s.name === name);
+      const doc = sheet && sheet.path ? await parse(sheet.path) : null;
+      if (!doc) return [];
+      const out = [];
+      let rIdx = -1;
+      for (const row of byTag(doc, 'row')) {
+        rIdx = row.getAttribute('r') ? +row.getAttribute('r') - 1 : rIdx + 1;
+        const arr = [];
+        let ci = 0;
+        for (const c of kids(row, 'c')) {
+          const ref = c.getAttribute('r');
+          if (ref) ci = colIndex(ref);
+          const t = c.getAttribute('t'), vEl = kids(c, 'v')[0];
+          let v = null;
+          if (t === 's') v = vEl ? strings[+vEl.textContent] ?? '' : null;
+          else if (t === 'inlineStr') v = byTag(c, 't').map((x) => x.textContent).join('');
+          else if (t === 'str') v = vEl ? vEl.textContent : null;
+          else if (t === 'b') v = vEl ? vEl.textContent === '1' : null;
+          else if (t === 'e') v = null;
+          else if (vEl) { const n = parseFloat(vEl.textContent); v = Number.isFinite(n) ? n : vEl.textContent; }
+          arr[ci++] = v;
+        }
+        out[rIdx] = arr;
+      }
+      for (let i = 0; i < out.length; i++) if (!out[i]) out[i] = [];
+      return out;
+    },
+  };
+}
+
+/* ============================================================ csv reading */
+function parseCsv(text) {
+  text = text.replace(/^﻿/, '');
+  const first = text.split(/\r?\n/, 1)[0];
+  const delim = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ';'
+    : (first.match(/\t/g) || []).length > (first.match(/,/g) || []).length ? '\t' : ',';
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === delim) { row.push(field); field = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+    } else field += ch;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ======================================================== wear database */
+const SEGMENT_COL = /^seg(?:ment)?\.?\s*(\d+)\s*[-_:]?\s*(.+)$/i;
+const ID_NAMES = ['test set number', 'test set', 'test #', 'test no', 'test number', 'test id', 'test'];
+const GRADE_NAMES = ['brush grade', 'grade'];
+const NOTES_NAMES = ['notes', 'note', 'comments', 'comment'];
+const normHeader = (v) => String(v ?? '').replace(/\s+/g, ' ').trim();
+function toNumber(v) {
+  if (isNum(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '') { const n = Number(v.trim().replace(/,/g, '')); return Number.isFinite(n) ? n : null; }
+  return null;
+}
+function cleanId(v) {
+  if (v == null) return '';
+  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(v);
+  return String(v).trim();
+}
+const cleanText = (v) => (v == null ? '' : String(v).trim());
+
+/** Build the database from a table of rows; returns null if the layout is not recognised. */
+function buildDatabase(rows, source) {
+  const h = rows.findIndex((r) => r && r.some((v) => v != null && String(v).trim() !== ''));
+  if (h < 0) return null;
+  const header = rows[h].map(normHeader);
+  const lower = header.map((x) => x.toLowerCase());
+  const find = (names) => { for (const n of names) { const i = lower.indexOf(n); if (i >= 0) return i; } return -1; };
+  const idCol = find(ID_NAMES), gradeCol = find(GRADE_NAMES), notesCol = find(NOTES_NAMES);
+  const metrics = [], valueCols = [];
+  header.forEach((name, col) => {
+    const m = SEGMENT_COL.exec(name);
+    if (!m) return;
+    let metric = m[2].trim();
+    metric = metric[0].toUpperCase() + metric.slice(1);
+    const existing = metrics.find((x) => x.toLowerCase() === metric.toLowerCase());
+    if (existing) metric = existing; else metrics.push(metric);
+    valueCols.push({ col, seg: +m[1], metric });
+  });
+  if (idCol < 0 || !valueCols.length) return null;
+  const segments = [...new Set(valueCols.map((v) => v.seg))].sort((a, b) => a - b);
+
+  const raw = [];
+  for (let r = h + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const id = cleanId(row[idCol]);
+    if (id) raw.push({ id, row });
+  }
+  if (!raw.length) return null;
+  const totals = {}, seen = {};
+  raw.forEach(({ id }) => { totals[id] = (totals[id] || 0) + 1; });
+  const tests = [], values = {};
+  raw.forEach(({ id, row }, i) => {
+    seen[id] = (seen[id] || 0) + 1;
+    const label = totals[id] > 1 ? `${id} (${seen[id]})` : id;
+    tests.push({ label, id, grade: gradeCol >= 0 ? cleanText(row[gradeCol]) : '', notes: notesCol >= 0 ? cleanText(row[notesCol]) : '', row: i });
+    const vals = {};
+    metrics.forEach((m) => { vals[m] = {}; segments.forEach((s) => { vals[m][s] = null; }); });
+    valueCols.forEach(({ col, seg, metric }) => { vals[metric][seg] = toNumber(row[col]); });
+    values[label] = vals;
+  });
+  return hydrate({ source, loadedAt: new Date().toISOString(), tests, values, metrics, segments });
+}
+function hydrate(db) {
+  db.index = new Map(db.tests.map((t) => [t.label, t]));
+  const counts = {};
+  db.tests.forEach((t) => { counts[t.id] = (counts[t.id] || 0) + 1; });
+  db.duplicateIds = Object.keys(counts).filter((k) => counts[k] > 1).sort((a, b) => cmpKeys(naturalKey(a), naturalKey(b)));
+  return db;
+}
+const val = (db, label, metric, seg) => { const v = db.values[label]?.[metric]?.[seg]; return isNum(v) ? v : null; };
+const segsWithData = (db, label, segments) => segments.filter((s) => db.metrics.some((m) => val(db, label, m, s) !== null)).length;
+
+async function loadFile(file) {
+  const name = file.name;
+  if (/\.(csv|txt)$/i.test(name)) {
+    const db = buildDatabase(parseCsv(await file.text()), name);
+    if (!db) throw new Error('No test data found. Expected columns like "Test Set Number", "Brush Grade" and "Segment 1 Riser Wear".');
+    return db;
+  }
+  if (/\.xls$/i.test(name)) throw new Error('Old .xls files are not supported: open it in Excel and save as .xlsx or .xlsm.');
+  const book = await readXlsx(await file.arrayBuffer());
+  const order = [...book.sheetNames].sort((a, b) => (b.toLowerCase() === 'datastring') - (a.toLowerCase() === 'datastring'));
+  for (const sheet of order) {
+    const db = buildDatabase(await book.rows(sheet), name);
+    if (db) { db.sheet = sheet; return db; }
+  }
+  throw new Error('No sheet with test data found. Expected a sheet (normally "DataString") with columns like "Test Set Number" and "Segment 1 Riser Wear".');
+}
+
+/* ================================================================ state */
+const state = {
+  db: null, selected: [], baseline: '', order: 'input', groupBy: 'auto', excluded: [], keepEmpty: false,
+  higherIsBetter: true, title: DEFAULT_TITLE, units: 'hrs/in', search: '', grade: '',
+};
+function save() {
+  try {
+    const { db, search, ...rest } = state;
+    const dbCopy = db && { source: db.source, sheet: db.sheet, loadedAt: db.loadedAt, tests: db.tests, values: db.values, metrics: db.metrics, segments: db.segments };
+    localStorage.setItem(STORE_KEY, JSON.stringify({ db: dbCopy, state: rest }));
+  } catch (e) { /* storage unavailable: the page still works */ }
+}
+function restore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!saved || !saved.db) return false;
+    Object.assign(state, saved.state || {});
+    state.db = hydrate(saved.db);
+    state.selected = state.selected.filter((l) => state.db.index.has(l));
+    return true;
+  } catch (e) { return false; }
+}
+
+function matchTests(db, token) {
+  const t = token.trim().toLowerCase();
+  if (!t) return [];
+  if (isGlob(t)) { const re = globRe(t); return db.tests.filter((x) => re.test(x.label) || re.test(x.id)); }
+  return db.tests.filter((x) => x.label.toLowerCase().includes(t) || x.id.toLowerCase().includes(t)
+    || x.grade.toLowerCase().includes(t) || x.notes.toLowerCase().includes(t));
+}
+function shownTests() {
+  const db = state.db;
+  let list = db.tests;
+  const tokens = state.search.split(/[\s,;]+/).filter(Boolean);
+  if (tokens.length) {
+    // Keep the order the IDs were typed in, so "26-01 25-09" adds 26-01 first.
+    const seen = new Set();
+    list = [];
+    tokens.forEach((tok) => matchTests(db, tok).forEach((x) => { if (!seen.has(x.label)) { seen.add(x.label); list.push(x); } }));
+  }
+  if (state.grade) list = list.filter((x) => normGrade(x.grade) === state.grade);
+  return list;
+}
+function sortLabels(db, labels, by) {
+  const T = (l) => db.index.get(l);
+  if (by === 'test') return [...labels].sort((a, b) => cmpKeys(naturalKey(T(a).id), naturalKey(T(b).id)) || T(a).row - T(b).row);
+  if (by === 'grade') return [...labels].sort((a, b) => (normGrade(T(a).grade) < normGrade(T(b).grade) ? -1 : normGrade(T(a).grade) > normGrade(T(b).grade) ? 1 : 0)
+    || cmpKeys(naturalKey(T(a).id), naturalKey(T(b).id)) || T(a).row - T(b).row);
+  return [...labels];
+}
+
+/* =========================================================== comparison */
+function buildComparison() {
+  const db = state.db;
+  let labels = state.selected.filter((l) => db.index.has(l));
+  if (!labels.length) return null;
+  labels = sortLabels(db, labels, state.order);
+  const baseline = labels.includes(state.baseline) ? state.baseline : null;
+  const requested = db.segments.filter((s) => !state.excluded.includes(s));
+  const hasData = (s) => labels.some((l) => db.metrics.some((m) => val(db, l, m, s) !== null));
+  const dropped = state.keepEmpty ? [] : requested.filter((s) => !hasData(s));
+  const segments = requested.filter((s) => !dropped.includes(s));
+  if (!segments.length) return { error: 'None of the compared tests has data for the chosen segments.' };
+  const groupBy = state.groupBy === 'auto' ? (labels.length > AUTO_GROUP_BY_TEST_ABOVE ? 'test' : 'segment') : state.groupBy;
+  const cmp = {
+    db, labels, segments, dropped, baseline, groupBy, generated: new Date(),
+    units: state.units || 'hrs/in', title: state.title || DEFAULT_TITLE, hib: state.higherIsBetter,
+    metrics: db.metrics,
+    info: (l) => db.index.get(l),
+    v: (l, m, s) => val(db, l, m, s),
+  };
+  cmp.rowMean = (l, m) => mean(segments.map((s) => cmp.v(l, m, s)));
+  cmp.pct = (l, m, s) => {
+    if (!baseline) return null;
+    const a = s === 'mean' ? cmp.rowMean(l, m) : cmp.v(l, m, s), b = s === 'mean' ? cmp.rowMean(baseline, m) : cmp.v(baseline, m, s);
+    return isNum(a) && isNum(b) && b !== 0 ? a / b - 1 : null;
+  };
+  cmp.segCount = (l) => segsWithData(db, l, segments);
+  return cmp;
+}
+
+/* ============================================================== rendering */
+function niceMax(v) {
+  if (!(v > 0)) return [1, 0.2];
+  const raw = v / 5, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+  return [step * Math.ceil(v / step - 1e-9), step];
+}
+function svgGroupedBars(categories, series, colors, yLabel, height = 340) {
+  const nCat = categories.length, nSer = Math.max(series.length, 1);
+  const rotate = nCat > 12 || Math.max(0, ...categories.map((c) => c.length)) * nCat > 110;
+  const left = 64, right = 16, top = 14, bottom = rotate ? 78 : 40;
+  const groupW = Math.max(28, nSer * 9 + 16);
+  const plotW = Math.max(640 - left - right, nCat * groupW);
+  const width = Math.round(left + plotW + right), plotH = height - top - bottom;
+  const vmax = Math.max(0, ...series.flatMap(([, vals]) => vals.filter(isNum)));
+  const [ymax, step] = niceMax(vmax);
+  const out = [`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img">`];
+  for (let i = 0; i * step <= ymax + 1e-9; i++) {
+    const t = i * step, y = top + plotH - (t / ymax) * plotH;
+    out.push(`<line x1="${left}" x2="${(left + plotW).toFixed(1)}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e5e7eb"/>`);
+    out.push(`<text x="${left - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="#6b7280">${fmtNum(t)}</text>`);
+  }
+  out.push(`<text transform="translate(14 ${Math.round(top + plotH / 2)}) rotate(-90)" text-anchor="middle" font-size="12" fill="#374151">${esc(yLabel)}</text>`);
+  const slot = plotW / Math.max(nCat, 1), inner = slot * 0.82, barW = inner / nSer;
+  categories.forEach((cat, ci) => {
+    const x0 = left + ci * slot + (slot - inner) / 2;
+    series.forEach(([name, vals], si) => {
+      const v = vals[ci];
+      if (!isNum(v)) return;
+      const h = (v / ymax) * plotH, x = x0 + si * barW;
+      out.push(`<rect x="${x.toFixed(1)}" y="${(top + plotH - h).toFixed(1)}" width="${Math.max(barW - 1, 1).toFixed(1)}" height="${h.toFixed(1)}" fill="${colors[si]}"><title>${esc(name)} · ${esc(cat)}: ${fmtNum(v)}</title></rect>`);
+    });
+    const cx = left + ci * slot + slot / 2, ly = top + plotH + 16;
+    out.push(rotate
+      ? `<text transform="translate(${cx.toFixed(1)} ${ly - 6}) rotate(-45)" text-anchor="end" font-size="11" fill="#374151">${esc(cat)}</text>`
+      : `<text x="${cx.toFixed(1)}" y="${ly}" text-anchor="middle" font-size="11" fill="#374151">${esc(cat)}</text>`);
+  });
+  out.push(`<line x1="${left}" x2="${(left + plotW).toFixed(1)}" y1="${top + plotH}" y2="${top + plotH}" stroke="#9ca3af"/></svg>`);
+  return out.join('');
+}
+const legend = (names, colors) => `<div class="legend">${names.map((n, i) => `<span style="--c:${colors[i]}">${esc(n)}</span>`).join('')}</div>`;
+function cellColor(v, lo, hi, hib) {
+  if (!isNum(v) || !isNum(lo) || !isNum(hi)) return '';
+  let t = hi === lo ? 0.5 : (v - lo) / (hi - lo);
+  if (!hib) t = 1 - t;
+  return ` style="background:${threeColor(t, BAD, MID, GOOD)}"`;
+}
+function pctColor(v, bound, hib) {
+  if (!isNum(v)) return '';
+  let t = 0.5 + Math.max(-1, Math.min(1, v / bound)) / 2;
+  if (!hib) t = 1 - t;
+  return ` style="background:${threeColor(t, NEG, ZERO, POS)}"`;
+}
+function metricTable(cmp, metric, pct) {
+  const cols = [...cmp.segments.map((s) => (l) => (pct ? cmp.pct(l, metric, s) : cmp.v(l, metric, s))),
+    (l) => (pct ? cmp.pct(l, metric, 'mean') : cmp.rowMean(l, metric))];
+  const colVals = cols.map((f) => cmp.labels.map(f));
+  let bound = 0.1;
+  if (pct) colVals.flat().filter(isNum).forEach((v) => { bound = Math.max(bound, Math.abs(v)); });
+  const rows = cmp.labels.map((l, i) => {
+    const cells = colVals.map((vals) => {
+      const v = vals[i];
+      const style = pct ? pctColor(v, bound, cmp.hib) : cellColor(v, minOf(vals), maxOf(vals), cmp.hib);
+      return `<td class="num"${style}>${pct ? fmtPct(v) : fmtNum(v)}</td>`;
+    }).join('');
+    return `<tr${l === cmp.baseline ? ' class="baseline"' : ''}><td class="label">${esc(l)}</td><td>${esc(cmp.info(l).grade)}</td>${cells}</tr>`;
+  });
+  if (!pct) {
+    [['Group mean', mean], ['Group min', minOf], ['Group max', maxOf]].forEach(([name, f]) => {
+      rows.push(`<tr class="stat"><td class="label">${name}</td><td></td>${colVals.map((vals) => `<td class="num">${fmtNum(f(vals))}</td>`).join('')}</tr>`);
+    });
+  }
+  const head = cmp.segments.map((s) => `<th>Seg ${s}</th>`).join('');
+  return `<div class="scroll"><table><thead><tr><th>Test</th><th>Grade</th>${head}<th>Mean</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+}
+function renderReport(cmp) {
+  const n = cmp.labels.length;
+  const testColors = palette(n), segColors = palette(cmp.segments.length);
+  const parts = [`<h1>${esc(cmp.title)}</h1>`,
+    `<p class="meta">Generated ${fmtDate(cmp.generated)} from ${esc(cmp.db.source)}</p>`];
+  let line = `${n} test${n === 1 ? '' : 's'} compared · segments ${cmp.segments.join(', ')} · values in ${esc(cmp.units)} · colour scales: green = ${cmp.hib ? 'higher' : 'lower'}`;
+  if (cmp.dropped.length) line += ` · segment(s) ${cmp.dropped.join(', ')} omitted (no data)`;
+  parts.push(`<p class="meta">${line}</p>`);
+  if (cmp.baseline) parts.push(`<p class="meta">Baseline: <b>${esc(cmp.baseline)}</b></p>`);
+  const repeated = [...new Set(cmp.labels.map((l) => cmp.info(l).id))].filter((id) => cmp.db.duplicateIds.includes(id));
+  if (repeated.length) parts.push(`<p class="meta">${esc(repeated.join(', '))} appear${repeated.length === 1 ? 's' : ''} more than once in the data; each run is labelled (1), (2), …</p>`);
+
+  const meanCols = cmp.metrics.map((m) => cmp.labels.map((l) => cmp.rowMean(l, m)));
+  let head = cmp.metrics.map((m) => `<th>${esc(m)}<br>mean</th>`).join('');
+  if (cmp.baseline) head += cmp.metrics.map((m) => `<th>${esc(m)}<br>vs baseline</th>`).join('');
+  const rows = cmp.labels.map((l, i) => {
+    const t = cmp.info(l);
+    let cells = meanCols.map((vals) => `<td class="num"${cellColor(vals[i], minOf(vals), maxOf(vals), cmp.hib)}>${fmtNum(vals[i])}</td>`).join('');
+    if (cmp.baseline) cells += cmp.metrics.map((m) => { const v = cmp.pct(l, m, 'mean'); return `<td class="num"${pctColor(v, 0.25, cmp.hib)}>${fmtPct(v)}</td>`; }).join('');
+    return `<tr${l === cmp.baseline ? ' class="baseline"' : ''}><td class="num">${i + 1}</td><td class="label">${esc(l)}</td><td>${esc(t.grade)}</td><td class="notes">${esc(t.notes)}</td><td class="num">${cmp.segCount(l)}</td>${cells}</tr>`;
+  });
+  parts.push('<h2 class="first">Tests compared</h2>');
+  parts.push(`<div class="scroll"><table><thead><tr><th>#</th><th>Test</th><th>Grade</th><th>Notes</th><th>Segments<br>with data</th>${head}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`);
+  parts.push('<p class="note">Means are taken over the compared segments that have data for that test; compare means only between tests with the same segment count.</p>');
+
+  cmp.metrics.forEach((metric) => {
+    parts.push(`<h2>${esc(metric)} (${esc(cmp.units)})</h2>`);
+    let cats, series, colors, names;
+    if (cmp.groupBy === 'segment') {
+      cats = cmp.segments.map((s) => `Seg ${s}`);
+      series = cmp.labels.map((l) => [l, cmp.segments.map((s) => cmp.v(l, metric, s))]);
+      colors = testColors; names = cmp.labels;
+    } else {
+      cats = cmp.labels;
+      series = cmp.segments.map((s) => [`Seg ${s}`, cmp.labels.map((l) => cmp.v(l, metric, s))]);
+      colors = segColors; names = cmp.segments.map((s) => `Seg ${s}`);
+    }
+    parts.push(`<div class="scroll">${svgGroupedBars(cats, series, colors, cmp.units)}</div>`);
+    parts.push(legend(names, colors));
+    parts.push('<h3>Values</h3>' + metricTable(cmp, metric, false));
+    if (cmp.baseline) parts.push(`<h3>% difference vs baseline ${esc(cmp.baseline)}</h3>` + metricTable(cmp, metric, true));
+  });
+  return parts.join('');
+}
+
+/* ============================================================ zip writing */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipFiles(files, mime) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  const d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, time, 2], [12, date, 2], [14, crc, 4],
+      [18, data.length, 4], [22, data.length, 4], [26, name.length, 2], [28, 0, 2]]
+      .forEach(([o, v, s]) => (s === 4 ? lh.setUint32(o, v, true) : lh.setUint16(o, v, true)));
+    const ch = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, time, 2], [14, date, 2], [16, crc, 4],
+      [20, data.length, 4], [24, data.length, 4], [28, name.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2],
+      [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, v, s]) => (s === 4 ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true)));
+    parts.push(lh, name, data);
+    central.push(ch, name);
+    offset += 30 + name.length + data.length;
+  }
+  const cdSize = central.reduce((a, p) => a + p.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, files.length, 2], [10, files.length, 2], [12, cdSize, 4], [16, offset, 4], [20, 0, 2]]
+    .forEach(([o, v, s]) => (s === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true)));
+  return new Blob([...parts, ...central, end], { type: mime });
+}
+
+/* ============================================================ xlsx writing */
+const xmlEsc = (s) => String(s ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+  .replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+const NS_MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+function colName(c) { let s = ''; c += 1; while (c > 0) { const m = (c - 1) % 26; s = String.fromCharCode(65 + m) + s; c = Math.floor((c - 1) / 26); } return s; }
+const cellRef = (r, c, absRow = false, absCol = false) => `${absCol ? '$' : ''}${colName(c)}${absRow ? '$' : ''}${r + 1}`;
+const quoteSheet = (n) => `'${n.replace(/'/g, "''")}'`;
+const absRange = (sheet, r1, c1, r2, c2) => `${quoteSheet(sheet)}!$${colName(c1)}$${r1 + 1}` + (r1 === r2 && c1 === c2 ? '' : `:$${colName(c2)}$${r2 + 1}`);
+const colPx = (w) => Math.floor(w * 7 + 0.5) + 5;
+
+// Cell style ids (see STYLES_XML).
+const ST = { title: 1, note: 2, header: 3, text: 4, bold: 5, number: 6, integer: 7, pct: 8, statLabel: 9, statNum: 10, baseline: 11, selected: 12, subtitle: 13 };
+const STYLES_XML = XML_HEAD + `<styleSheet xmlns="${NS_MAIN}"><numFmts count="1"><numFmt numFmtId="164" formatCode="+0.0%;-0.0%;0.0%"/></numFmts>`
+  + '<fonts count="8"><font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><b/><sz val="16"/><color rgb="FF1F3864"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><i/><sz val="11"/><color rgb="FF595959"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><b/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><b/><i/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><i/><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/><family val="2"/></font>'
+  + '<font><b/><sz val="12"/><color rgb="FF1F3864"/><name val="Calibri"/><family val="2"/></font></fonts>'
+  + '<fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>'
+  + ['1F4E78', 'F2F2F2', 'DDEBF7', 'E2EFDA'].map((c) => `<fill><patternFill patternType="solid"><fgColor rgb="FF${c}"/><bgColor indexed="64"/></patternFill></fill>`).join('')
+  + '</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'
+  + '<border>' + ['left', 'right', 'top', 'bottom'].map((s) => `<${s} style="thin"><color rgb="FFBFBFBF"/></${s}>`).join('') + '<diagonal/></border></borders>'
+  + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+  + '<cellXfs count="14">'
+  + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+  + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+  + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'
+  + '<xf numFmtId="0" fontId="4" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1"/>'
+  + '<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+  + '<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>'
+  + '<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+  + '<xf numFmtId="0" fontId="5" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
+  + '<xf numFmtId="1" fontId="6" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>'
+  + '<xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
+  + '<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>'
+  + '<xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+  + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+  + '<dxfs count="0"/><tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleLight16"/></styleSheet>';
+
+class Sheet {
+  constructor(name) { this.name = name; this.rows = new Map(); this.cols = []; this.cf = []; this.heights = {}; this.charts = []; }
+  set(r, c, cell) { if (!this.rows.has(r)) this.rows.set(r, new Map()); this.rows.get(r).set(c, cell); }
+  str(r, c, v, s = 0) { this.set(r, c, { t: 's', v: String(v ?? ''), s }); }
+  num(r, c, v, s = 0) { this.set(r, c, isNum(v) ? { t: 'n', v, s } : { t: 'blank', s }); }
+  fml(r, c, f, cached, s = 0) { this.set(r, c, { t: 'f', f, v: cached, s }); }
+  row(r, c, values, s = 0) { values.forEach((v, i) => (typeof v === 'number' ? this.num(r, c + i, v, s) : this.str(r, c + i, v, s))); }
+  colWidth(c1, c2, w) { this.cols.push({ c1, c2, w }); }
+  scale(r1, c1, r2, c2, hib) {
+    const [lo, hi] = hib ? [BAD, GOOD] : [GOOD, BAD];
+    this.cf.push({ ref: `${cellRef(r1, c1)}:${cellRef(r2, c2)}`, xml: `<cfvo type="min"/><cfvo type="percentile" val="50"/><cfvo type="max"/><color rgb="FF${lo.slice(1)}"/><color rgb="FF${MID.slice(1)}"/><color rgb="FF${hi.slice(1)}"/>` });
+  }
+  pctScale(r1, c1, r2, c2, bound, hib) {
+    const [lo, hi] = hib ? [NEG, POS] : [POS, NEG];
+    this.cf.push({ ref: `${cellRef(r1, c1)}:${cellRef(r2, c2)}`, xml: `<cfvo type="num" val="${-bound}"/><cfvo type="num" val="0"/><cfvo type="num" val="${bound}"/><color rgb="FF${lo.slice(1)}"/><color rgb="FF${ZERO.slice(1)}"/><color rgb="FF${hi.slice(1)}"/>` });
+  }
+  toXml(sst, opts) {
+    const rowKeys = [...this.rows.keys()].sort((a, b) => a - b);
+    let maxC = 0, maxR = 0;
+    const data = rowKeys.map((r) => {
+      const cells = this.rows.get(r), keys = [...cells.keys()].sort((a, b) => a - b);
+      maxR = Math.max(maxR, r); maxC = Math.max(maxC, keys[keys.length - 1]);
+      const ht = this.heights[r] ? ` ht="${this.heights[r]}" customHeight="1"` : '';
+      return `<row r="${r + 1}"${ht}>` + keys.map((c) => {
+        const x = cells.get(c), ref = cellRef(r, c), s = x.s ? ` s="${x.s}"` : '';
+        if (x.t === 's') return `<c r="${ref}"${s} t="s"><v>${sst.id(x.v)}</v></c>`;
+        if (x.t === 'n') return `<c r="${ref}"${s}><v>${x.v}</v></c>`;
+        if (x.t === 'f') return isNum(x.v) ? `<c r="${ref}"${s}><f>${xmlEsc(x.f)}</f><v>${x.v}</v></c>` : `<c r="${ref}"${s} t="str"><f>${xmlEsc(x.f)}</f><v></v></c>`;
+        return `<c r="${ref}"${s}/>`;
+      }).join('') + '</row>';
+    }).join('');
+    const fr = opts.freezeRows || 0, fc = opts.freezeCols || 0;
+    let pane = '';
+    if (fr && fc) pane = `<pane xSplit="${fc}" ySplit="${fr}" topLeftCell="${cellRef(fr, fc)}" activePane="bottomRight" state="frozen"/><selection pane="topRight"/><selection pane="bottomLeft"/><selection pane="bottomRight"/>`;
+    else if (fr) pane = `<pane ySplit="${fr}" topLeftCell="${cellRef(fr, 0)}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft"/>`;
+    const cols = this.cols.length ? '<cols>' + [...this.cols].sort((a, b) => a.c1 - b.c1).map((c) => `<col min="${c.c1 + 1}" max="${c.c2 + 1}" width="${c.w + 0.7109375}" customWidth="1"/>`).join('') + '</cols>' : '';
+    const cf = this.cf.map((x, i) => `<conditionalFormatting sqref="${x.ref}"><cfRule type="colorScale" priority="${i + 1}"><colorScale>${x.xml}</colorScale></cfRule></conditionalFormatting>`).join('');
+    return XML_HEAD + `<worksheet xmlns="${NS_MAIN}" xmlns:r="${NS_R}">`
+      + (opts.fit ? '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>' : '')
+      + `<dimension ref="A1:${cellRef(maxR, maxC)}"/>`
+      + `<sheetViews><sheetView${opts.selected ? ' tabSelected="1"' : ''} workbookViewId="0">${pane}</sheetView></sheetViews>`
+      + '<sheetFormatPr defaultRowHeight="15"/>' + cols + `<sheetData>${data}</sheetData>`
+      + (opts.autoFilter ? `<autoFilter ref="${opts.autoFilter}"/>` : '') + cf
+      + '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>'
+      + (opts.fit ? '<pageSetup orientation="landscape" fitToHeight="0"/>' : '')
+      + (this.charts.length ? '<drawing r:id="rId1"/>' : '') + '</worksheet>';
+  }
+}
+class SharedStrings {
+  constructor() { this.map = new Map(); this.list = []; this.count = 0; }
+  id(s) { this.count++; if (!this.map.has(s)) { this.map.set(s, this.list.length); this.list.push(s); } return this.map.get(s); }
+  toXml() {
+    return XML_HEAD + `<sst xmlns="${NS_MAIN}" count="${this.count}" uniqueCount="${this.list.length}">`
+      + this.list.map((s) => `<si><t${/^\s|\s$/.test(s) ? ' xml:space="preserve"' : ''}>${xmlEsc(s)}</t></si>`).join('') + '</sst>';
+  }
+}
+function richText(text, size) {
+  const sz = size ? ` sz="${size * 100}"` : '';
+  return `<c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr${sz} baseline="0"/></a:pPr><a:r><a:rPr lang="en-US"${sz} baseline="0"/><a:t>${xmlEsc(text)}</a:t></a:r></a:p></c:rich></c:tx><c:layout/>`;
+}
+function chartXml(ch, axBase) {
+  const strCache = (vals) => `<c:strCache><c:ptCount val="${vals.length}"/>${vals.map((v, i) => `<c:pt idx="${i}"><c:v>${xmlEsc(v)}</c:v></c:pt>`).join('')}</c:strCache>`;
+  const numCache = (vals) => `<c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${vals.length}"/>${vals.map((v, i) => (isNum(v) ? `<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>` : '')).join('')}</c:numCache>`;
+  const ser = ch.series.map((s, i) => `<c:ser><c:idx val="${i}"/><c:order val="${i}"/>`
+    + `<c:tx><c:strRef><c:f>${xmlEsc(s.nameRef)}</c:f>${strCache([s.name])}</c:strRef></c:tx>`
+    + `<c:spPr><a:solidFill><a:srgbClr val="${s.color.slice(1)}"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr><c:invertIfNegative val="0"/>`
+    + `<c:cat><c:strRef><c:f>${xmlEsc(s.catRef)}</c:f>${strCache(s.cats)}</c:strRef></c:cat>`
+    + `<c:val><c:numRef><c:f>${xmlEsc(s.valRef)}</c:f>${numCache(s.vals)}</c:numRef></c:val></c:ser>`).join('');
+  const a1 = axBase + 1, a2 = axBase + 2;
+  const rot = ch.rotate ? '<c:txPr><a:bodyPr rot="-2700000" vert="horz"/><a:lstStyle/><a:p><a:pPr><a:defRPr/></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>' : '';
+  return XML_HEAD + '<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="' + NS_R + '">'
+    + '<c:lang val="en-US"/><c:chart>'
+    + `<c:title>${richText(ch.title, 13)}<c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/>`
+    + `<c:plotArea><c:layout/><c:barChart><c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/>${ser}`
+    + `<c:gapWidth val="150"/><c:axId val="${a1}"/><c:axId val="${a2}"/></c:barChart>`
+    + `<c:catAx><c:axId val="${a1}"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>`
+    + `<c:title>${richText(ch.xTitle)}<c:overlay val="0"/></c:title><c:numFmt formatCode="General" sourceLinked="1"/>`
+    + `<c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/>${rot}`
+    + `<c:crossAx val="${a2}"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>`
+    + `<c:valAx><c:axId val="${a2}"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/>`
+    + '<c:majorGridlines><c:spPr><a:ln><a:solidFill><a:srgbClr val="D9D9D9"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>'
+    + `<c:title>${richText(ch.yTitle)}<c:overlay val="0"/></c:title><c:numFmt formatCode="0" sourceLinked="0"/>`
+    + `<c:majorTickMark val="out"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:crossAx val="${a1}"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx></c:plotArea>`
+    + `<c:legend><c:legendPos val="${ch.legendPos}"/><c:overlay val="0"/></c:legend><c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart>`
+    + '<c:spPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:ln><a:solidFill><a:srgbClr val="BFBFBF"/></a:solidFill></a:ln></c:spPr>'
+    + '<c:printSettings><c:headerFooter/><c:pageMargins b="0.75" l="0.7" r="0.7" t="0.75" header="0.3" footer="0.3"/><c:pageSetup/></c:printSettings></c:chartSpace>';
+}
+function drawingXml(sheet) {
+  const widths = (c) => { const col = sheet.cols.find((x) => c >= x.c1 && c <= x.c2); return col ? colPx(col.w) : 64; };
+  const anchors = sheet.charts.map((ch, i) => {
+    let c = 0, rem = ch.width;
+    while (rem >= widths(c)) { rem -= widths(c); c++; }
+    const rows = Math.floor(ch.height / 20), rowOff = ch.height - rows * 20;
+    return '<xdr:twoCellAnchor editAs="oneCell">'
+      + `<xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${ch.row}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>`
+      + `<xdr:to><xdr:col>${c}</xdr:col><xdr:colOff>${rem * 9525}</xdr:colOff><xdr:row>${ch.row + rows}</xdr:row><xdr:rowOff>${rowOff * 9525}</xdr:rowOff></xdr:to>`
+      + `<xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${i + 2}" name="Chart ${i + 1}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>`
+      + '<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart">'
+      + `<c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="${NS_R}" r:id="rId${i + 1}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
+  });
+  return XML_HEAD + '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' + anchors.join('') + '</xdr:wsDr>';
+}
+function sheetName(name, used) {
+  const base = name.replace(/[[\]:*?/\\]/g, '-').replace(/^'+|'+$/g, '').slice(0, 31) || 'Sheet';
+  let cand = base, n = 2;
+  while (used.has(cand.toLowerCase())) { const suf = ` (${n++})`; cand = base.slice(0, 31 - suf.length) + suf; }
+  used.add(cand.toLowerCase());
+  return cand;
+}
+
+const HEADER_ROW = 3, SUMMARY_HEADER_ROW = 5;
+function writeMetricSheet(ws, cmp, metric) {
+  const n = cmp.labels.length, segs = cmp.segments;
+  const fc = 2, lc = 1 + segs.length, meanCol = lc + 1, fr = HEADER_ROW + 1, lr = HEADER_ROW + n;
+  ws.str(0, 0, `${metric} (${cmp.units})`, ST.title);
+  ws.str(1, 0, `Each column is coloured across the compared tests; green = ${cmp.hib ? 'highest' : 'lowest'}. Blank cells = no measurement.`, ST.note);
+  const header = ['Test', 'Grade', ...segs.map((s) => `Seg ${s}`), 'Mean'];
+  ws.row(HEADER_ROW, 0, header, ST.header);
+  cmp.labels.forEach((l, i) => {
+    const r = fr + i;
+    ws.str(r, 0, l, l === cmp.baseline ? ST.baseline : ST.bold);
+    ws.str(r, 1, cmp.info(l).grade, ST.text);
+    segs.forEach((s, j) => ws.num(r, fc + j, cmp.v(l, metric, s), ST.number));
+    const rng = `${cellRef(r, fc)}:${cellRef(r, lc)}`;
+    ws.fml(r, meanCol, `IF(COUNT(${rng})=0,"",AVERAGE(${rng}))`, cmp.rowMean(l, metric), ST.number);
+  });
+  const colVals = (c) => (c <= lc ? cmp.labels.map((l) => cmp.v(l, metric, segs[c - fc])) : cmp.labels.map((l) => cmp.rowMean(l, metric)));
+  const statsRow = lr + 2;
+  [['Group mean', 'AVERAGE', mean], ['Group min', 'MIN', minOf], ['Group max', 'MAX', maxOf]].forEach(([name, fn, f], k) => {
+    const r = statsRow + k;
+    ws.str(r, 0, name, ST.statLabel); ws.num(r, 1, null, ST.statLabel);
+    for (let c = fc; c <= meanCol; c++) {
+      const rng = `${cellRef(fr, c)}:${cellRef(lr, c)}`;
+      ws.fml(r, c, `IF(COUNT(${rng})=0,"",${fn}(${rng}))`, f(colVals(c)), ST.statNum);
+    }
+  });
+  for (let c = fc; c <= meanCol; c++) ws.scale(fr, c, lr, c, cmp.hib);
+
+  if (cmp.baseline) {
+    const baseRow = fr + cmp.labels.indexOf(cmp.baseline), top = statsRow + 5, hdr = top + 1;
+    ws.str(top, 0, `% difference vs baseline ${cmp.baseline}`, ST.subtitle);
+    ws.row(hdr, 0, header, ST.header);
+    let bound = 0.1;
+    cmp.labels.forEach((l, i) => {
+      const r = hdr + 1 + i, src = fr + i;
+      ws.str(r, 0, l, l === cmp.baseline ? ST.baseline : ST.bold);
+      ws.str(r, 1, cmp.info(l).grade, ST.text);
+      for (let c = fc; c <= meanCol; c++) {
+        const cached = cmp.pct(l, metric, c <= lc ? segs[c - fc] : 'mean');
+        if (isNum(cached)) bound = Math.max(bound, Math.abs(cached));
+        const cell = cellRef(src, c), base = cellRef(baseRow, c, true);
+        ws.fml(r, c, `IFERROR(IF(OR(${cell}="",${base}=""),"",${cell}/${base}-1),"")`, cached, ST.pct);
+      }
+    });
+    ws.pctScale(hdr + 1, fc, hdr + n, meanCol, +bound.toFixed(4), cmp.hib);
+  }
+  ws.colWidth(0, 0, Math.max(12, Math.min(30, Math.max(...cmp.labels.map((l) => l.length)) + 2)));
+  ws.colWidth(1, 1, 12);
+  ws.colWidth(fc, meanCol, 10);
+  ws.opts = { freezeRows: fr, freezeCols: 2, fit: true };
+  return { fr, lr, fc, lc, meanCol };
+}
+
+function buildXlsx(cmp) {
+  const used = new Set(), sst = new SharedStrings();
+  const summary = new Sheet(sheetName('Summary', used));
+  const metricSheets = cmp.metrics.map((m) => new Sheet(sheetName(m, used)));
+  const longWs = new Sheet(sheetName('Data (long)', used));
+  const catWs = new Sheet(sheetName('Test Catalog', used));
+  const pos = metricSheets.map((ws, k) => writeMetricSheet(ws, cmp, cmp.metrics[k]));
+  const n = cmp.labels.length;
+
+  // Summary
+  summary.str(0, 0, cmp.title, ST.title);
+  summary.str(1, 0, `Generated ${fmtDate(cmp.generated)} from ${cmp.db.source}`, ST.note);
+  let line = `${n} tests compared · segments ${cmp.segments.join(', ')} · values in ${cmp.units}`;
+  if (cmp.dropped.length) line += ` · segment(s) ${cmp.dropped.join(', ')} omitted (no data)`;
+  summary.str(2, 0, line, ST.note);
+  if (cmp.baseline) summary.str(3, 0, `Baseline: ${cmp.baseline} (highlighted blue)`, ST.note);
+  const hr = SUMMARY_HEADER_ROW, mc0 = 5, nm = cmp.metrics.length;
+  const headers = ['#', 'Test', 'Grade', 'Notes', 'Segments with data', ...cmp.metrics.map((m) => `${m} mean`)];
+  if (cmp.baseline) headers.push(...cmp.metrics.map((m) => `${m} vs baseline`));
+  summary.heights[hr] = 32;
+  summary.row(hr, 0, headers, ST.header);
+  const baseIdx = cmp.baseline ? cmp.labels.indexOf(cmp.baseline) : -1;
+  cmp.labels.forEach((l, i) => {
+    const r = hr + 1 + i, t = cmp.info(l);
+    summary.num(r, 0, i + 1, ST.integer);
+    summary.str(r, 1, l, l === cmp.baseline ? ST.baseline : ST.bold);
+    summary.str(r, 2, t.grade, ST.text);
+    summary.str(r, 3, t.notes, ST.text);
+    summary.num(r, 4, cmp.segCount(l), ST.integer);
+    cmp.metrics.forEach((m, k) => {
+      summary.fml(r, mc0 + k, `${quoteSheet(metricSheets[k].name)}!${cellRef(pos[k].fr + i, pos[k].meanCol)}`, cmp.rowMean(l, m), ST.number);
+      if (cmp.baseline) {
+        const cell = cellRef(r, mc0 + k), base = cellRef(hr + 1 + baseIdx, mc0 + k, true);
+        summary.fml(r, mc0 + nm + k, `IFERROR(IF(OR(${cell}="",${base}=""),"",${cell}/${base}-1),"")`, cmp.pct(l, m, 'mean'), ST.pct);
+      }
+    });
+  });
+  for (let k = 0; k < nm; k++) summary.scale(hr + 1, mc0 + k, hr + n, mc0 + k, cmp.hib);
+  if (cmp.baseline) summary.pctScale(hr + 1, mc0 + nm, hr + n, mc0 + 2 * nm - 1, 0.25, cmp.hib);
+  summary.colWidth(0, 0, 5);
+  summary.colWidth(1, 1, Math.max(12, Math.min(30, Math.max(...cmp.labels.map((l) => l.length)) + 2)));
+  summary.colWidth(2, 2, 13);
+  summary.colWidth(3, 3, 30);
+  summary.colWidth(4, 4, 11);
+  summary.colWidth(mc0, headers.length - 1, 13);
+  summary.opts = { freezeRows: hr + 1, freezeCols: 2, fit: true, selected: true };
+
+  const byTest = palette(n), bySeg = palette(cmp.segments.length);
+  let row = hr + n + 3;
+  summary.str(row - 1, 0, 'Charts', ST.subtitle);
+  cmp.metrics.forEach((m, k) => {
+    const ws = metricSheets[k].name, p = pos[k];
+    const segCats = cmp.segments.map((s) => `Seg ${s}`);
+    let series, nCat, nSer, xTitle;
+    if (cmp.groupBy === 'segment') {
+      nCat = cmp.segments.length; nSer = n; xTitle = 'Segment';
+      series = cmp.labels.map((l, i) => ({ name: l, nameRef: absRange(ws, p.fr + i, 0, p.fr + i, 0), color: byTest[i],
+        cats: segCats, catRef: absRange(ws, HEADER_ROW, p.fc, HEADER_ROW, p.lc),
+        vals: cmp.segments.map((s) => cmp.v(l, m, s)), valRef: absRange(ws, p.fr + i, p.fc, p.fr + i, p.lc) }));
+    } else {
+      nCat = n; nSer = cmp.segments.length; xTitle = 'Test';
+      series = cmp.segments.map((s, j) => ({ name: `Seg ${s}`, nameRef: absRange(ws, HEADER_ROW, p.fc + j, HEADER_ROW, p.fc + j), color: bySeg[j],
+        cats: cmp.labels, catRef: absRange(ws, p.fr, 0, p.lr, 0),
+        vals: cmp.labels.map((l) => cmp.v(l, m, s)), valRef: absRange(ws, p.fr, p.fc + j, p.lr, p.fc + j) }));
+    }
+    const width = Math.round(Math.max(780, Math.min(4000, 160 + nCat * (nSer * 13 + 26)))), height = 380;
+    summary.charts.push({ title: `${m} (${cmp.units})`, xTitle, yTitle: cmp.units, series, rotate: nCat > 12,
+      legendPos: nSer > 8 ? 'r' : 'b', width, height, row });
+    row += Math.ceil(height / 20) + 2;
+  });
+
+  // Data (long)
+  longWs.row(0, 0, ['Test', 'Test ID', 'Grade', 'Notes', 'Metric', 'Segment', 'Value'], ST.header);
+  let r = 1;
+  cmp.labels.forEach((l) => {
+    const t = cmp.info(l);
+    cmp.metrics.forEach((m) => cmp.segments.forEach((s) => {
+      const v = cmp.v(l, m, s);
+      if (v === null) return;
+      longWs.row(r, 0, [l, t.id, t.grade, t.notes, m]);
+      longWs.num(r, 5, s); longWs.num(r, 6, v);
+      r++;
+    }));
+  });
+  [[0, 1, 12], [2, 2, 13], [3, 3, 28], [4, 4, 16], [5, 6, 10]].forEach(([a, b, w]) => longWs.colWidth(a, b, w));
+  longWs.opts = { freezeRows: 1, autoFilter: `A1:G${Math.max(r, 2)}` };
+
+  // Test Catalog
+  const sel = new Set(cmp.labels), db = cmp.db;
+  catWs.row(0, 0, ['Test', 'Test ID', 'Grade', 'Notes', 'Segments with data', 'In this report'], ST.header);
+  db.tests.forEach((t, i) => {
+    const s = sel.has(t.label) ? ST.selected : ST.text;
+    catWs.row(i + 1, 0, [t.label, t.id, t.grade, t.notes], s);
+    catWs.num(i + 1, 4, segsWithData(db, t.label, db.segments), s);
+    catWs.str(i + 1, 5, sel.has(t.label) ? 'Yes' : '', s);
+  });
+  [[0, 1, 12], [2, 2, 14], [3, 3, 30], [4, 5, 12]].forEach(([a, b, w]) => catWs.colWidth(a, b, w));
+  catWs.opts = { freezeRows: 1, autoFilter: `A1:F${db.tests.length + 1}` };
+
+  // Package
+  const sheets = [summary, ...metricSheets, longWs, catWs];
+  const files = [];
+  sheets.forEach((s, i) => files.push({ name: `xl/worksheets/sheet${i + 1}.xml`, data: s.toXml(sst, s.opts || {}) }));
+  const rels = (items) => XML_HEAD + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    + items.map(([id, type, target]) => `<Relationship Id="${id}" Type="${type}" Target="${target}"/>`).join('') + '</Relationships>';
+  files.push({ name: 'xl/worksheets/_rels/sheet1.xml.rels', data: rels([['rId1', `${REL}/drawing`, '../drawings/drawing1.xml']]) });
+  files.push({ name: 'xl/drawings/drawing1.xml', data: drawingXml(summary) });
+  files.push({ name: 'xl/drawings/_rels/drawing1.xml.rels', data: rels(summary.charts.map((_, i) => [`rId${i + 1}`, `${REL}/chart`, `../charts/chart${i + 1}.xml`])) });
+  summary.charts.forEach((ch, i) => files.push({ name: `xl/charts/chart${i + 1}.xml`, data: chartXml(ch, 50010000 + i * 10) }));
+  files.push({ name: 'xl/sharedStrings.xml', data: sst.toXml() });
+  files.push({ name: 'xl/styles.xml', data: STYLES_XML });
+  const defined = sheets.map((s, i) => (s.opts && s.opts.autoFilter
+    ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">${xmlEsc(quoteSheet(s.name))}!$${s.opts.autoFilter.replace(':', ':$').replace(/([A-Z]+)(\d+)/g, '$1$$$2')}</definedName>` : '')).join('');
+  files.push({ name: 'xl/workbook.xml', data: XML_HEAD + `<workbook xmlns="${NS_MAIN}" xmlns:r="${NS_R}"><workbookPr/><bookViews><workbookView activeTab="0"/></bookViews><sheets>`
+    + sheets.map((s, i) => `<sheet name="${xmlEsc(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets>'
+    + (defined ? `<definedNames>${defined}</definedNames>` : '') + '<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>' });
+  files.push({ name: 'xl/_rels/workbook.xml.rels', data: rels([...sheets.map((_, i) => [`rId${i + 1}`, `${REL}/worksheet`, `worksheets/sheet${i + 1}.xml`]),
+    [`rId${sheets.length + 1}`, `${REL}/styles`, 'styles.xml'], [`rId${sheets.length + 2}`, `${REL}/sharedStrings`, 'sharedStrings.xml']]) });
+  const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  files.push({ name: 'docProps/core.xml', data: XML_HEAD + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+    + `<dc:title>${xmlEsc(cmp.title)}</dc:title><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>` });
+  files.push({ name: 'docProps/app.xml', data: XML_HEAD + '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application></Properties>' });
+  files.push({ name: '_rels/.rels', data: rels([['rId1', `${REL}/officeDocument`, 'xl/workbook.xml'],
+    ['rId2', 'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties', 'docProps/core.xml'],
+    ['rId3', `${REL}/extended-properties`, 'docProps/app.xml']]) });
+  const CT = 'application/vnd.openxmlformats-officedocument';
+  const overrides = [['/xl/workbook.xml', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml'],
+    ...sheets.map((_, i) => [`/xl/worksheets/sheet${i + 1}.xml`, `${CT}.spreadsheetml.worksheet+xml`]),
+    ['/xl/styles.xml', `${CT}.spreadsheetml.styles+xml`], ['/xl/sharedStrings.xml', `${CT}.spreadsheetml.sharedStrings+xml`],
+    ['/xl/drawings/drawing1.xml', `${CT}.drawing+xml`], ...summary.charts.map((_, i) => [`/xl/charts/chart${i + 1}.xml`, `${CT}.drawingml.chart+xml`]),
+    ['/docProps/core.xml', 'application/vnd.openxmlformats-package.core-properties+xml'], ['/docProps/app.xml', `${CT}.extended-properties+xml`]];
+  files.unshift({ name: '[Content_Types].xml', data: XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'
+    + overrides.map(([p, t]) => `<Override PartName="${p}" ContentType="${t}"/>`).join('') + '</Types>' });
+  return zipFiles(files, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+}
+
+/* ================================================================ exports */
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+const fileStem = (cmp) => `BCSG_Comparison_${cmp.labels.length}_tests_${fmtDate(cmp.generated).slice(0, 10)}`;
+function exportHtml(cmp) {
+  const css = $('#report-css').textContent;
+  const doc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(cmp.title)}</title>`
+    + `<style>body{margin:0;padding:24px 16px 48px;background:#fff;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}main{max-width:1400px;margin:0 auto}${css}</style></head>`
+    + `<body><main class="report">${renderReport(cmp)}</main></body></html>`;
+  download(new Blob([doc], { type: 'text/html' }), fileStem(cmp) + '.html');
+}
+function exportCsv(cmp) {
+  const q = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+  const lines = [['Test', 'Test ID', 'Grade', 'Notes', 'Metric', 'Segment', 'Value'].join(',')];
+  cmp.labels.forEach((l) => { const t = cmp.info(l);
+    cmp.metrics.forEach((m) => cmp.segments.forEach((s) => { const v = cmp.v(l, m, s);
+      if (v !== null) lines.push([l, t.id, t.grade, t.notes, m, s, v].map(q).join(',')); })); });
+  download(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' }), fileStem(cmp) + '.csv');
+}
+
+/* ===================================================================== UI */
+let dragLabel = null;
+function renderAll() {
+  const db = state.db;
+  $('#layout').hidden = !db;
+  $('#drop').hidden = !!db;
+  if (!db) { $('#status').textContent = 'No data loaded'; return; }
+  const when = new Date(db.loadedAt);
+  $('#status').textContent = `${db.source}${db.sheet ? ` · sheet ${db.sheet}` : ''} · ${db.tests.length} tests · loaded ${fmtDate(when)}`;
+
+  // grade filter
+  const grades = new Map();
+  db.tests.forEach((t) => { const k = normGrade(t.grade); if (!k) return; if (!grades.has(k)) grades.set(k, { name: t.grade, n: 0 }); grades.get(k).n++; });
+  const gradeOpts = [...grades.entries()].sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1));
+  $('#gradeFilter').innerHTML = `<option value="">All grades</option>` + gradeOpts.map(([k, g]) => `<option value="${esc(k)}"${k === state.grade ? ' selected' : ''}>${esc(g.name)} (${g.n})</option>`).join('');
+
+  renderList();
+  renderChips();
+
+  // options
+  const sel = state.selected;
+  if (state.baseline && !sel.includes(state.baseline)) state.baseline = '';
+  $('#baseline').innerHTML = '<option value="">None</option>' + sel.map((l) => `<option${l === state.baseline ? ' selected' : ''}>${esc(l)}</option>`).join('');
+  $('#order').value = state.order;
+  $('#groupBy').value = state.groupBy;
+  $('#title').value = state.title;
+  $('#units').value = state.units;
+  $('#higherBetter').checked = state.higherIsBetter;
+  $('#keepEmpty').checked = state.keepEmpty;
+  $('#segs').innerHTML = db.segments.map((s) => {
+    const has = sel.some((l) => db.metrics.some((m) => val(db, l, m, s) !== null));
+    return `<label class="${has || !sel.length ? '' : 'empty'}" title="${has || !sel.length ? '' : 'No data for the compared tests'}"><input type="checkbox" data-seg="${s}"${state.excluded.includes(s) ? '' : ' checked'}> ${s}</label>`;
+  }).join('');
+
+  renderReportArea();
+  save();
+}
+function renderList() {
+  const db = state.db, shown = shownTests(), sel = new Set(state.selected);
+  $('#list').innerHTML = shown.map((t) => `<div class="item${sel.has(t.label) ? ' on' : ''}" role="option" aria-selected="${sel.has(t.label)}" data-label="${esc(t.label)}">`
+    + `<input type="checkbox" tabindex="-1"${sel.has(t.label) ? ' checked' : ''}><span class="id">${esc(t.label)}</span><span class="gr">${esc(t.grade)}</span>`
+    + `<span class="nt" title="${esc(t.notes)}">${esc(t.notes)}</span><span class="sg" title="Segments with data">${segsWithData(db, t.label, db.segments)}</span></div>`).join('')
+    || '<div class="hint" style="padding:8px">No tests match.</div>';
+  const notIn = shown.filter((t) => !sel.has(t.label)).length;
+  $('#listHint').textContent = `${shown.length} of ${db.tests.length} tests shown · right-hand number = segments with data`;
+  $('#addShown').textContent = `Add shown (${notIn})`;
+  $('#addShown').disabled = !notIn;
+}
+function renderChips() {
+  const n = state.selected.length;
+  $('#selCount').textContent = n ? `(${n})` : '';
+  $('#chips').innerHTML = n ? state.selected.map((l, i) => `<span class="chip${l === state.baseline ? ' base' : ''}" draggable="true" data-label="${esc(l)}"><b>${i + 1}</b>${esc(l)}<button title="Remove" data-remove="${esc(l)}">×</button></span>`).join('')
+    : '<span class="hint" style="margin:0">None yet</span>';
+  $('#clearSel').disabled = !n;
+}
+function renderReportArea() {
+  const cmp = buildComparison();
+  const ok = cmp && !cmp.error;
+  ['#exportXlsx', '#exportHtml', '#exportCsv', '#print'].forEach((id) => { $(id).disabled = !ok; });
+  if (!cmp) { $('#report').innerHTML = '<div class="empty-state">Pick tests on the left to compare them.<br>Tip: type <b>25-*</b> and press Enter to add every 2025 test.</div>'; return; }
+  if (cmp.error) { $('#report').innerHTML = `<div class="empty-state">${esc(cmp.error)}</div>`; return; }
+  $('#report').innerHTML = renderReport(cmp);
+}
+function toggle(label) {
+  const i = state.selected.indexOf(label);
+  if (i >= 0) state.selected.splice(i, 1); else state.selected.push(label);
+  renderAll();
+}
+function addShown() {
+  const sel = new Set(state.selected);
+  shownTests().forEach((t) => { if (!sel.has(t.label)) state.selected.push(t.label); });
+  renderAll();
+}
+async function openFile(file) {
+  $('#loadError').textContent = '';
+  try {
+    const db = await loadFile(file);
+    const keep = state.db ? state.selected.filter((l) => db.tests.some((t) => t.label === l)) : [];
+    state.db = db;
+    state.selected = keep;
+    renderAll();
+  } catch (e) {
+    const msg = e && e.message ? e.message : String(e);
+    if (state.db) alert(`Could not load ${file.name}: ${msg}`); else $('#loadError').textContent = `Could not load ${file.name}: ${msg}`;
+  }
+}
+
+$('#file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) openFile(f); e.target.value = ''; });
+document.addEventListener('dragover', (e) => { if ([...e.dataTransfer.types].includes('Files')) { e.preventDefault(); document.body.classList.add('dragover'); } });
+document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) document.body.classList.remove('dragover'); });
+document.addEventListener('drop', (e) => {
+  document.body.classList.remove('dragover');
+  if (e.dataTransfer.files.length) { e.preventDefault(); openFile(e.dataTransfer.files[0]); }
+});
+$('#search').addEventListener('input', (e) => { state.search = e.target.value; renderList(); });
+$('#search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addShown(); } });
+$('#gradeFilter').addEventListener('change', (e) => { state.grade = e.target.value; renderList(); save(); });
+$('#addShown').addEventListener('click', addShown);
+$('#list').addEventListener('click', (e) => { const item = e.target.closest('.item'); if (item) toggle(item.dataset.label); });
+$('#clearSel').addEventListener('click', () => { state.selected = []; renderAll(); });
+$('#chips').addEventListener('click', (e) => { const b = e.target.closest('[data-remove]'); if (b) toggle(b.dataset.remove); });
+$('#chips').addEventListener('dragstart', (e) => { const c = e.target.closest('.chip'); if (!c) return; dragLabel = c.dataset.label; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragLabel); });
+$('#chips').addEventListener('dragover', (e) => { if (dragLabel) { e.preventDefault(); e.stopPropagation(); } });
+$('#chips').addEventListener('drop', (e) => {
+  if (!dragLabel) return;
+  e.preventDefault(); e.stopPropagation();
+  const target = e.target.closest('.chip');
+  const from = state.selected.indexOf(dragLabel);
+  if (from >= 0) {
+    state.selected.splice(from, 1);
+    let to = target ? state.selected.indexOf(target.dataset.label) : state.selected.length;
+    if (target && to >= 0) { const r = target.getBoundingClientRect(); if (e.clientX > r.left + r.width / 2) to++; }
+    state.selected.splice(to < 0 ? state.selected.length : to, 0, dragLabel);
+    if (state.order !== 'input') state.order = 'input';
+  }
+  dragLabel = null; renderAll();
+});
+$('#chips').addEventListener('dragend', () => { dragLabel = null; document.querySelectorAll('.chip.dragging').forEach((c) => c.classList.remove('dragging')); });
+$('#baseline').addEventListener('change', (e) => { state.baseline = e.target.value; renderAll(); });
+$('#order').addEventListener('change', (e) => { state.order = e.target.value; renderAll(); });
+$('#groupBy').addEventListener('change', (e) => { state.groupBy = e.target.value; renderAll(); });
+$('#segs').addEventListener('change', (e) => {
+  const s = +e.target.dataset.seg;
+  state.excluded = e.target.checked ? state.excluded.filter((x) => x !== s) : [...state.excluded, s];
+  renderAll();
+});
+$('#title').addEventListener('input', (e) => { state.title = e.target.value; renderReportArea(); save(); });
+$('#units').addEventListener('input', (e) => { state.units = e.target.value; renderReportArea(); save(); });
+$('#higherBetter').addEventListener('change', (e) => { state.higherIsBetter = e.target.checked; renderAll(); });
+$('#keepEmpty').addEventListener('change', (e) => { state.keepEmpty = e.target.checked; renderAll(); });
+$('#forget').addEventListener('click', () => {
+  try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+  state.db = null; state.selected = []; state.baseline = ''; renderAll();
+});
+$('#exportXlsx').addEventListener('click', () => { const c = buildComparison(); if (c && !c.error) download(buildXlsx(c), fileStem(c) + '.xlsx'); });
+$('#exportHtml').addEventListener('click', () => { const c = buildComparison(); if (c && !c.error) exportHtml(c); });
+$('#exportCsv').addEventListener('click', () => { const c = buildComparison(); if (c && !c.error) exportCsv(c); });
+$('#print').addEventListener('click', () => window.print());
+
+restore();
+renderAll();
+</script>
+</body>
+</html>

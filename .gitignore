@@ -11,6 +11,7 @@ venv/
 BCSG_Comparison_Report.xlsx
 reports/
 *.html
+!BCSG_Comparison.html
 
 # Excel lock files
 ~$*

@@ -1,13 +1,49 @@
 # BCSG Comparison Report
 
-A Python replacement for `Blast-Cooled_Starter_Generator_Comparison_Spreadsheet.xlsm`.
+A replacement for `Blast-Cooled_Starter_Generator_Comparison_Spreadsheet.xlsm`.
 It reads the same test data and builds a comparison report for **any number of tests**,
 instead of the workbook's five fixed slots.
 
-The workbook stays the place where test data lives. The tool reads its `DataString`
-sheet directly, so you keep adding tests there exactly as before.
+The workbook stays the place where test data lives. Both versions below read its
+`DataString` sheet directly, so you keep adding tests there exactly as before.
 
-## Setup
+There are two ways to run it:
+
+* **In a browser: no installation.** Open [`BCSG_Comparison.html`](BCSG_Comparison.html).
+* **Python command line:** for scripted or batch reports (see [Python version](#python-version)).
+
+## Browser version (no Python needed)
+
+1. Copy `BCSG_Comparison.html` anywhere: your desktop, a shared drive, or an email
+   attachment. It's a single file with no external libraries and needs no internet
+   connection.
+2. Double-click it. It opens in Chrome, Edge, Firefox or Safari (any recent version).
+3. Click **Open data file…** (or drag the file onto the page) and choose the comparison
+   workbook (`.xlsm`/`.xlsx`) or a CSV with the same columns. The file is read inside the
+   browser and **never uploaded anywhere**.
+4. Pick tests:
+   * Click tests in the list to add or remove them, or
+   * Type in the search box and press **Enter** to add everything shown. Examples:
+     `26-01 26-02 25-09` (several IDs, added in that order), `25-*` (wildcards),
+     `diagonal` (searches notes), `ASG4` (searches grades). The grade drop-down
+     filters too.
+   * Drag the chips under *Compared tests* to reorder them.
+5. Set the options: a baseline (adds % difference tables), sort order, chart grouping,
+   which segments to show, and, under *More options*, the title, units and colour direction.
+6. Export:
+   * **⬇ Excel**: the same workbook as the Python version, with native charts and live
+     formulas.
+   * **⬇ HTML**: a standalone copy of the report to email.
+   * **⬇ CSV**: the selected values, one row per test, metric and segment.
+   * **Print / PDF**: prints only the report.
+
+The page remembers the last data file and selection on that computer, so next time it
+opens ready to go. Click **Open data file…** again after adding tests to the workbook.
+*More options → Forget saved data* clears it.
+
+## Python version
+
+### Setup
 
 Requires Python 3.9 or newer.
 
@@ -15,7 +51,7 @@ Requires Python 3.9 or newer.
 pip install -r requirements.txt
 ```
 
-## Usage
+### Usage
 
 Run from this folder (or `pip install .` to get a `bcsg-compare` command).
 
@@ -74,6 +110,8 @@ data stops the run with a "did you mean ..." suggestion instead of silently show
 
 ## What's in the Excel report
 
+The same in both versions.
+
 * **Summary**: the compared tests (grade, notes, how many segments have data, mean of
   each wear metric, and % vs the baseline if you set one), followed by a column chart for
   each metric: Riser, Bearing, Average, Positive and Negative wear.
@@ -126,4 +164,7 @@ python -m pytest
 ```
 
 The tests use a small synthetic dataset, so the real test data is not needed (or
-stored) in this repository.
+stored) in this repository. `tests/test_web.py` drives `BCSG_Comparison.html` in headless
+Chromium and checks it against the Python implementation, including a cell-by-cell
+comparison of the two Excel exports. It runs only when Node.js with Playwright is
+available and is skipped otherwise.
