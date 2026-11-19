@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Generated reports
+BCSG_Comparison_Report.xlsx
+reports/
+*.html
+
+# Excel lock files
+~$*

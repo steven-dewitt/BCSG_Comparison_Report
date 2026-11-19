@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bcsg-compare"
+version = "1.0.0"
+description = "Compare any number of blast-cooled starter generator brush wear tests"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["pandas>=1.5", "openpyxl>=3.0", "XlsxWriter>=3.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+bcsg-compare = "bcsg_compare.cli:main"
+
+[tool.setuptools]
+packages = ["bcsg_compare"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
